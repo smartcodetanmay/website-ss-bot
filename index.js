@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const readline = require('readline');
+require('dotenv').config();
 
 // Target Policy Pages Configuration with Fallback Routes
 const TARGET_PAGE_TYPES = [
