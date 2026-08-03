@@ -14,5 +14,13 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "playwright": "^1.62.1"
+  },
+  "pkg": {
+    "assets": [
+      ".env"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ]
   }
 }

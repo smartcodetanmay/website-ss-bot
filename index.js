@@ -5,7 +5,7 @@ const os = require('os');
 const readline = require('readline');
 require('dotenv').config();
 
-// Target Policy Pages Configuration with Fallback Routes
+
 const TARGET_PAGE_TYPES = [
   { 
     name: '01_Home_Page', 
@@ -71,8 +71,8 @@ async function capturePolicyScreenshots() {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  console.log(`\n🚀 Starting Enhanced Screenshot Downloader for: ${targetUrl}`);
-  console.log(`📁 Saving Screenshots to: ${outputDir}\n`);
+  console.log(`\n Starting Enhanced Screenshot Downloader for: ${targetUrl}`);
+  console.log(` Saving Screenshots to: ${outputDir}\n`);
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
@@ -80,8 +80,6 @@ async function capturePolicyScreenshots() {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   });
   const page = await context.newPage();
-
-  // Block unnecessary third-party ads & analytics scripts for speed
   await page.route('**/*', (route) => {
     const url = route.request().url();
     if (
@@ -128,14 +126,13 @@ async function capturePolicyScreenshots() {
       return null;
     }
 
-    // Capture other Policy Pages
+
     const baseUrl = new URL(targetUrl).origin;
 
     for (let i = 1; i < TARGET_PAGE_TYPES.length; i++) {
       const policy = TARGET_PAGE_TYPES[i];
       let targetPageUrl = findMatchingLink(policy.keywords);
 
-      // Fallback mechanism: Try standard routes if link was not found on home page DOM
       const urlsToTry = [];
       if (targetPageUrl) {
         urlsToTry.push(targetPageUrl);
@@ -154,7 +151,6 @@ async function capturePolicyScreenshots() {
           if (response && response.status() < 400) {
             await page.waitForTimeout(1500);
             
-            // Auto scroll down to trigger lazy loading elements
             await page.evaluate(async () => {
               await new Promise((resolve) => {
                 let totalHeight = 0;
