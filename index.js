@@ -5,6 +5,9 @@ const os = require('os');
 const readline = require('readline');
 require('dotenv').config();
 
+// Auto-detect Playwright Chromium path for packaged .exe / Mac app
+const executablePath = path.join(process.cwd(), 'ms-playwright');
+process.env.PLAYWRIGHT_BROWSERS_PATH = executablePath;
 
 const TARGET_PAGE_TYPES = [
   { 
@@ -50,19 +53,7 @@ function askQuestion(query) {
   }));
 }
 
-async function capturePolicyScreenshots() {
-  let targetUrl = await askQuestion('\n🌐 Enter Website URL: ');
-  targetUrl = targetUrl.trim();
-
-  if (!targetUrl) {
-    console.error("❌ Invalid URL entered.");
-    process.exit(1);
-  }
-
-  if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-    targetUrl = 'https://' + targetUrl;
-  }
-
+async function processWebsite(targetUrl) {
   const userHome = os.homedir();
   const domainName = new URL(targetUrl).hostname.replace(/[^a-zA-Z0-9]/g, '_');
   const outputDir = path.join(userHome, 'Downloads', `Website_Policy_Screenshots_${domainName}`);
@@ -71,8 +62,8 @@ async function capturePolicyScreenshots() {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  console.log(`\n Starting Enhanced Screenshot Downloader for: ${targetUrl}`);
-  console.log(` Saving Screenshots to: ${outputDir}\n`);
+  console.log(`\nStarting Enhanced Screenshot Downloader for: ${targetUrl}`);
+  console.log(`Saving Screenshots to: ${outputDir}\n`);
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
@@ -80,6 +71,7 @@ async function capturePolicyScreenshots() {
     userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
   });
   const page = await context.newPage();
+
   await page.route('**/*', (route) => {
     const url = route.request().url();
     if (
@@ -100,12 +92,10 @@ async function capturePolicyScreenshots() {
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await page.waitForTimeout(2000); 
 
-    // Home Page Full Screenshot
     const homeScreenshotPath = path.join(outputDir, '01_Home_Page.png');
     await page.screenshot({ path: homeScreenshotPath, fullPage: true });
     console.log(`✅ [1/6] Captured: Home Page`);
 
-    // Extract all links including text and hrefs
     const allLinks = await page.$$eval('a', anchors => {
       return anchors.map(a => ({
         text: (a.innerText || '').toLowerCase().trim(),
@@ -125,7 +115,6 @@ async function capturePolicyScreenshots() {
       }
       return null;
     }
-
 
     const baseUrl = new URL(targetUrl).origin;
 
@@ -174,12 +163,12 @@ async function capturePolicyScreenshots() {
             break;
           }
         } catch (err) {
-          // Continue trying next fallback route
+            
         }
       }
 
       if (!captured) {
-        console.log(`Could not capture: ${policy.name}`);
+        console.log(` Could not capture: ${policy.name}`);
       }
     }
 
@@ -187,8 +176,32 @@ async function capturePolicyScreenshots() {
     console.error(`Error: ${error.message}`);
   } finally {
     await browser.close();
-    console.log(`SS Done! Screenshots saved in: ${outputDir}\n`);
+    console.log(`\n✨ SS Done! Screenshots saved in: ${outputDir}`);
   }
 }
 
-capturePolicyScreenshots();
+async function mainLoop() {
+  while (true) {
+    console.log('\n================================================--');
+    let inputUrl = await askQuestion('🌐 Enter Website URL (or type "exit" to quit): ');
+    inputUrl = inputUrl.trim();
+
+    if (inputUrl.toLowerCase() === 'exit' || inputUrl.toLowerCase() === 'q') {
+      console.log('👋 Exiting application. Goodbye!');
+      process.exit(0);
+    }
+
+    if (!inputUrl) {
+      console.log('❌ Invalid URL entered. Try again.');
+      continue;
+    }
+
+    if (!inputUrl.startsWith('http://') && !inputUrl.startsWith('https://')) {
+      inputUrl = 'https://' + inputUrl;
+    }
+
+    await processWebsite(inputUrl);
+  }
+}
+
+mainLoop();
