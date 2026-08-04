@@ -5,38 +5,37 @@ const os = require('os');
 const readline = require('readline');
 require('dotenv').config();
 
-// Auto-detect Playwright Chromium path for packaged .exe / Mac app
 const executablePath = path.join(process.cwd(), 'ms-playwright');
 process.env.PLAYWRIGHT_BROWSERS_PATH = executablePath;
 
 const TARGET_PAGE_TYPES = [
-  { 
-    name: '01_Home_Page', 
+  {
+    name: '01_Home_Page',
     keywords: ['home', 'index'],
     fallbacks: ['/']
   },
-  { 
-    name: '02_Privacy_Policy', 
+  {
+    name: '02_Privacy_Policy',
     keywords: ['privacy-policy', 'privacy', 'gopniyata'],
     fallbacks: ['/pages/privacy-policy', '/policies/privacy-policy', '/privacy-policy']
   },
-  { 
-    name: '03_Terms_And_Conditions', 
+  {
+    name: '03_Terms_And_Conditions',
     keywords: ['terms-and-conditions', 'terms-of-service', 'terms', 'tc', 'tos', 'conditions'],
     fallbacks: ['/pages/terms-and-conditions', '/pages/terms-of-service', '/policies/terms-of-service', '/terms-and-conditions']
   },
-  { 
-    name: '04_Contact_Us', 
+  {
+    name: '04_Contact_Us',
     keywords: ['contact-us', 'contact', 'reach-us', 'support'],
     fallbacks: ['/pages/contact-us', '/pages/contact', '/contact-us', '/contact']
   },
-  { 
-    name: '05_Shipping_Policy', 
+  {
+    name: '05_Shipping_Policy',
     keywords: ['shipping-policy', 'shipping', 'delivery-policy', 'delivery', 'dispatch'],
     fallbacks: ['/pages/shipping-policy', '/pages/shipping', '/policies/shipping-policy', '/shipping-policy']
   },
-  { 
-    name: '06_Product_Pricing_Services', 
+  {
+    name: '06_Product_Pricing_Services',
     keywords: ['pricing', 'pricing-plans', 'products', 'services', 'plans', 'shop', 'collections'],
     fallbacks: ['/collections/all', '/collections', '/shop', '/products']
   }
@@ -75,9 +74,9 @@ async function processWebsite(targetUrl) {
   await page.route('**/*', (route) => {
     const url = route.request().url();
     if (
-      url.includes('google-analytics') || 
-      url.includes('facebook') || 
-      url.includes('doubleclick') || 
+      url.includes('google-analytics') ||
+      url.includes('facebook') ||
+      url.includes('doubleclick') ||
       url.includes('hotjar') ||
       url.includes('clarity.ms')
     ) {
@@ -90,7 +89,7 @@ async function processWebsite(targetUrl) {
   try {
     console.log(`⏳ Navigating to Home Page...`);
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await page.waitForTimeout(2000); 
+    await page.waitForTimeout(2000);
 
     const homeScreenshotPath = path.join(outputDir, '01_Home_Page.png');
     await page.screenshot({ path: homeScreenshotPath, fullPage: true });
@@ -136,10 +135,10 @@ async function processWebsite(targetUrl) {
         try {
           console.log(`⏳ Capturing ${policy.name}... (${currentUrl})`);
           const response = await page.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 20000 });
-          
+
           if (response && response.status() < 400) {
             await page.waitForTimeout(1500);
-            
+
             await page.evaluate(async () => {
               await new Promise((resolve) => {
                 let totalHeight = 0;
@@ -163,7 +162,7 @@ async function processWebsite(targetUrl) {
             break;
           }
         } catch (err) {
-            
+
         }
       }
 
